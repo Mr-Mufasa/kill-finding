@@ -3,10 +3,12 @@ import { VideoUpload } from '@/components/VideoUpload';
 import { KillDetectionSettings } from '@/components/KillDetectionSettings';
 import { ProcessingPipeline } from '@/components/ProcessingPipeline';
 import { KillClipResults } from '@/components/KillClipResults';
+import { DesktopRecordingControls } from '@/components/DesktopRecordingControls';
 import { useKillDetection, KillDetectionSettings as Settings } from '@/hooks/useKillDetection';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Target, Zap, Brain, Github } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Target, Zap, Brain, Github, Monitor } from 'lucide-react';
 
 const Index = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -121,13 +123,27 @@ const Index = () => {
             </div>
           )}
 
-          {/* Upload Section */}
+          {/* Upload/Recording Section */}
           {!uploadedFile && (
-            <VideoUpload
-              onVideoUploaded={handleVideoUpload}
-              isProcessing={isProcessing}
-              processingProgress={progress}
-            />
+            <Tabs defaultValue="upload" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="upload">Upload Video</TabsTrigger>
+                <TabsTrigger value="record" className="flex items-center gap-2">
+                  <Monitor className="w-4 h-4" />
+                  Desktop Recording
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="upload" className="mt-6">
+                <VideoUpload
+                  onVideoUploaded={handleVideoUpload}
+                  isProcessing={isProcessing}
+                  processingProgress={progress}
+                />
+              </TabsContent>
+              <TabsContent value="record" className="mt-6">
+                <DesktopRecordingControls />
+              </TabsContent>
+            </Tabs>
           )}
 
           {/* Settings and Processing */}
