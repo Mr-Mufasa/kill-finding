@@ -36,13 +36,9 @@ export const useScreenRecording = () => {
     if (window.electronAPI) {
       try {
         const sources = await window.electronAPI.getScreenSources();
-        const formattedSources = sources.map((source: any) => ({
-          id: source.id,
-          name: source.name,
-          thumbnail: source.thumbnail.toDataURL()
-        }));
-        setAvailableSources(formattedSources);
-        return formattedSources;
+        // Sources now come with proper thumbnails as base64 data URLs
+        setAvailableSources(sources);
+        return sources;
       } catch (error) {
         console.error('Error getting screen sources:', error);
         toast({
@@ -227,12 +223,8 @@ export const useScreenRecording = () => {
 
       // Listen for screen sources
       window.electronAPI.onScreenSources((sources: any[]) => {
-        const formattedSources = sources.map(source => ({
-          id: source.id,
-          name: source.name,
-          thumbnail: source.thumbnail.toDataURL()
-        }));
-        setAvailableSources(formattedSources);
+        // Sources now come with proper thumbnails as base64 data URLs
+        setAvailableSources(sources);
       });
 
       // Listen for stop recording from tray

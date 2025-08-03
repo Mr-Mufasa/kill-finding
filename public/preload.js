@@ -3,6 +3,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('electronAPI', {
   // Screen recording
   getScreenSources: () => ipcRenderer.invoke('get-screen-sources'),
+  startDesktopRecording: (sourceId) => ipcRenderer.invoke('start-desktop-recording', sourceId),
   saveRecording: (buffer, filename) => ipcRenderer.invoke('save-recording', buffer, filename),
   
   // Recording state
@@ -22,6 +23,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Stop recording
   onStopRecording: (callback) => {
     ipcRenderer.on('stop-recording', () => callback());
+  },
+  
+  // Start recording with source
+  onStartRecordingWithSource: (callback) => {
+    ipcRenderer.on('start-recording-with-source', (event, sourceId) => callback(sourceId));
   },
   
   // Remove listeners

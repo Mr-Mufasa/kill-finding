@@ -176,10 +176,38 @@ ipcMain.handle('get-screen-sources', async () => {
       types: ['window', 'screen'],
       thumbnailSize: { width: 150, height: 150 }
     });
-    return sources;
+    
+    // Convert NativeImage thumbnails to base64 data URLs
+    const sourcesWithThumbnails = sources.map(source => ({
+      id: source.id,
+      name: source.name,
+      thumbnail: source.thumbnail.toDataURL()
+    }));
+    
+    return sourcesWithThumbnails;
   } catch (error) {
     console.error('Error getting screen sources:', error);
     return [];
+  }
+});
+
+ipcMain.handle('start-desktop-recording', async (event, sourceId) => {
+  try {
+    // Set recording state
+    isRecording = true;
+    updateTrayMenu();
+    
+    // Send source ID to renderer for recording setup
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('start-recording-with-source', sourceId);
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error starting desktop recording:', error);
+    isRecording = false;
+    updateTrayMenu();
+    return { success: false, error: error.message };
   }
 });
 
