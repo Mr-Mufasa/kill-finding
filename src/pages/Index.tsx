@@ -154,11 +154,13 @@ const Index = () => {
           {/* Settings and Processing */}
           {uploadedFile && !isProcessing && clips.length === 0 && (
             <div className="grid lg:grid-cols-2 gap-8">
-              <VideoUpload
-                onVideoUploaded={handleVideoUpload}
-                isProcessing={isProcessing}
-                processingProgress={progress}
-              />
+              <div>
+                <VideoUpload
+                  onVideoUploaded={handleVideoUpload}
+                  isProcessing={isProcessing}
+                  processingProgress={progress}
+                />
+              </div>
               <KillDetectionSettings
                 settings={settings}
                 onChange={setSettings}
