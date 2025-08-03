@@ -41,8 +41,7 @@ export const DownloadDesktopApp = () => {
 
   const fetchLatestRelease = async () => {
     try {
-      // Replace with your actual GitHub repo
-      const response = await fetch('https://api.github.com/repos/your-username/your-repo/releases/latest');
+      const response = await fetch('https://api.github.com/repos/Mr-Mufasa/kill-finding/releases/latest');
       if (response.ok) {
         const release = await response.json();
         setLatestRelease(release);
@@ -147,7 +146,7 @@ export const DownloadDesktopApp = () => {
                 <Button 
                   variant="outline" 
                   className="w-full"
-                  onClick={() => window.open('https://github.com/your-username/your-repo', '_blank')}
+                  onClick={() => window.open('https://github.com/Mr-Mufasa/kill-finding', '_blank')}
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />
                   View on GitHub
