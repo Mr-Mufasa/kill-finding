@@ -17,7 +17,6 @@ function createWindow() {
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js')
     },
-    icon: path.join(__dirname, 'favicon.ico'),
     title: 'Valorant Kill Extractor'
   });
 
@@ -43,7 +42,10 @@ function createWindow() {
 }
 
 function createTray() {
-  tray = new Tray(path.join(__dirname, 'favicon.ico'));
+  // Create a simple 16x16 icon for the system tray
+  const { nativeImage } = require('electron');
+  const trayIcon = nativeImage.createEmpty();
+  tray = new Tray(trayIcon);
   
   const contextMenu = Menu.buildFromTemplate([
     {
