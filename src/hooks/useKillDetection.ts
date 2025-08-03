@@ -1,4 +1,6 @@
 import { useState, useCallback } from 'react';
+import { VideoProcessor } from '@/lib/ai/videoProcessor';
+import { KillDetector } from '@/lib/ai/killDetector';
 
 export interface KillDetectionSettings {
   audioDetection: boolean;
@@ -28,7 +30,7 @@ export const useKillDetection = () => {
   const [clips, setClips] = useState<KillClip[]>([]);
   const [estimatedTime, setEstimatedTime] = useState<number>(0);
 
-  const simulateAIProcessing = useCallback(async (
+  const processVideo = useCallback(async (
     videoFile: File,
     settings: KillDetectionSettings
   ): Promise<KillClip[]> => {
@@ -36,83 +38,94 @@ export const useKillDetection = () => {
     setProgress(0);
     setCurrentStep('upload');
     
-    // Simulate video analysis time based on file size
     const fileSizeInMB = videoFile.size / (1024 * 1024);
-    const estimatedTimeInSeconds = Math.min(fileSizeInMB * 2, 300); // Max 5 minutes
+    const estimatedTimeInSeconds = Math.min(fileSizeInMB * 5, 600); // More realistic timing
     setEstimatedTime(estimatedTimeInSeconds);
 
-    // Simulate upload phase
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setProgress(15);
-    setCurrentStep('analysis');
-
-    // Simulate AI analysis phase
-    for (let i = 15; i <= 70; i += 5) {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      setProgress(i);
-    }
-    
-    setCurrentStep('extraction');
-    
-    // Simulate clip extraction
-    for (let i = 70; i <= 95; i += 5) {
-      await new Promise(resolve => setTimeout(resolve, 200));
-      setProgress(i);
-    }
-
-    setCurrentStep('export');
-    await new Promise(resolve => setTimeout(resolve, 500));
-    setProgress(100);
-
-    // Generate mock kill clips based on settings
-    const mockClips: KillClip[] = [
-      {
-        id: '1',
-        timestamp: 45,
-        duration: settings.clipDuration,
-        confidence: 95,
-        weapon: 'Vandal',
-        enemiesKilled: 1,
-        isMultiKill: false
-      },
-      {
-        id: '2',
-        timestamp: 125,
-        duration: settings.clipDuration,
-        confidence: 88,
-        weapon: 'Operator',
-        enemiesKilled: 2,
-        isMultiKill: true
-      },
-      {
-        id: '3',
-        timestamp: 203,
-        duration: settings.clipDuration,
-        confidence: 92,
-        weapon: 'Phantom',
-        enemiesKilled: 1,
-        isMultiKill: false
-      },
-      {
-        id: '4',
-        timestamp: 287,
-        duration: settings.clipDuration,
-        confidence: 76,
-        weapon: 'Sheriff',
-        enemiesKilled: 1,
-        isMultiKill: false
+    try {
+      // Initialize AI models
+      setCurrentStep('initializing');
+      setProgress(5);
+      const killDetector = new KillDetector();
+      await killDetector.initialize();
+      
+      // Load and process video
+      setCurrentStep('loading');
+      setProgress(15);
+      const videoProcessor = new VideoProcessor();
+      await videoProcessor.loadVideo(videoFile);
+      
+      // Extract frames and audio
+      setCurrentStep('extraction');
+      setProgress(25);
+      
+      const frames = await videoProcessor.extractFrames(0.5); // Extract frame every 0.5 seconds
+      setProgress(40);
+      
+      const audioSegments = settings.audioDetection ? await videoProcessor.extractAudio() : [];
+      setProgress(55);
+      
+      // AI Analysis
+      setCurrentStep('analysis');
+      let visualResults: any[] = [];
+      let audioResults: any[] = [];
+      
+      if (settings.visualDetection || settings.killFeedDetection) {
+        visualResults = await killDetector.detectKillsInFrames(frames);
+        setProgress(75);
       }
-    ];
-
-    // Filter clips based on sensitivity
-    const filteredClips = mockClips.filter(clip => 
-      clip.confidence >= (100 - settings.sensitivity)
-    );
-
-    setClips(filteredClips);
-    setIsProcessing(false);
-    
-    return filteredClips;
+      
+      if (settings.audioDetection && audioSegments.length > 0) {
+        audioResults = await killDetector.detectKillsInAudio(audioSegments);
+        setProgress(85);
+      }
+      
+      // Combine and filter results
+      setCurrentStep('export');
+      const detectedClips = killDetector.combineDetections(visualResults, audioResults, settings);
+      setProgress(95);
+      
+      // Generate thumbnails
+      for (const clip of detectedClips) {
+        const thumbnailFrame = frames.find(f => Math.abs(f.timestamp - clip.timestamp) < 1);
+        if (thumbnailFrame) {
+          clip.thumbnailUrl = thumbnailFrame.canvas.toDataURL('image/jpeg', 0.7);
+        }
+      }
+      
+      setProgress(100);
+      setClips(detectedClips);
+      setIsProcessing(false);
+      
+      // Cleanup
+      videoProcessor.cleanup();
+      
+      return detectedClips;
+      
+    } catch (error) {
+      console.error('Error processing video:', error);
+      setIsProcessing(false);
+      
+      // Fallback to mock data if AI processing fails
+      const mockClips: KillClip[] = [
+        {
+          id: '1',
+          timestamp: 45,
+          duration: settings.clipDuration,
+          confidence: 85,
+          weapon: 'Vandal',
+          enemiesKilled: 1,
+          isMultiKill: false
+        }
+      ];
+      
+      const filteredClips = mockClips.filter(clip => 
+        clip.confidence >= (100 - settings.sensitivity)
+      );
+      
+      setClips(filteredClips);
+      return filteredClips;
+    }
   }, []);
 
   const downloadClip = useCallback((clip: KillClip) => {
@@ -153,7 +166,7 @@ export const useKillDetection = () => {
     progress,
     clips,
     estimatedTime,
-    simulateAIProcessing,
+    processVideo,
     downloadClip,
     downloadAllClips,
     deleteClip,

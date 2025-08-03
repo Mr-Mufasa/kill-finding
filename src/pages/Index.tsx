@@ -28,7 +28,7 @@ const Index = () => {
     progress,
     clips,
     estimatedTime,
-    simulateAIProcessing,
+    processVideo,
     downloadClip,
     downloadAllClips,
     deleteClip,
@@ -43,7 +43,7 @@ const Index = () => {
 
   const handleStartProcessing = async () => {
     if (!uploadedFile) return;
-    await simulateAIProcessing(uploadedFile, settings);
+    await processVideo(uploadedFile, settings);
   };
 
   const handleNewUpload = () => {
