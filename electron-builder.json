@@ -10,15 +10,8 @@
     "public/preload.js",
     "node_modules/**/*"
   ],
-  "extraFiles": [
-    {
-      "from": "public/favicon.ico",
-      "to": "favicon.ico"
-    }
-  ],
   "win": {
     "target": "nsis",
-    "icon": "public/favicon.ico",
     "publisherName": "Valorant Kill Extractor",
     "artifactName": "${productName}-Setup-${version}.${ext}"
   },
@@ -27,10 +20,7 @@
     "allowToChangeInstallationDirectory": true,
     "createDesktopShortcut": true,
     "createStartMenuShortcut": true,
-    "displayLanguageSelector": false,
-    "installerIcon": "public/favicon.ico",
-    "uninstallerIcon": "public/favicon.ico",
-    "installerHeaderIcon": "public/favicon.ico"
+    "displayLanguageSelector": false
   },
   "publish": {
     "provider": "github",
