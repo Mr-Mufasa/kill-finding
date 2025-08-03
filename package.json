@@ -1,7 +1,9 @@
 {
-  "name": "vite_react_shadcn_ts",
-  "private": true,
-  "version": "0.0.0",
+  "name": "valorant-kill-extractor",
+"private": true,
+"version": "1.0.0",
+"description": "A desktop application to extract kill clips from Valorant gameplay videos",
+"author": "Mufasa",
   "type": "module",
   "main": "public/electron.js",
   "scripts": {
