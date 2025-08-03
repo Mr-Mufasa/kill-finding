@@ -28,11 +28,16 @@ export const DesktopRecordingControls = () => {
   } = useScreenRecording();
 
   const handleStartRecording = async () => {
-    if (availableSources.length === 0) {
+    try {
       const sources = await getScreenSources();
-      if (sources.length === 0) return;
+      if (sources.length === 0) {
+        console.error('No screen sources available');
+        return;
+      }
+      setShowSourceSelector(true);
+    } catch (error) {
+      console.error('Error getting screen sources:', error);
     }
-    setShowSourceSelector(true);
   };
 
   const handleSourceSelect = (sourceId: string) => {

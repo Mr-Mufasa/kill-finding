@@ -4,6 +4,7 @@ import { KillDetectionSettings } from '@/components/KillDetectionSettings';
 import { ProcessingPipeline } from '@/components/ProcessingPipeline';
 import { KillClipResults } from '@/components/KillClipResults';
 import { DesktopRecordingControls } from '@/components/DesktopRecordingControls';
+import { DownloadDesktopApp } from '@/components/DownloadDesktopApp';
 import { useKillDetection, KillDetectionSettings as Settings } from '@/hooks/useKillDetection';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -126,12 +127,13 @@ const Index = () => {
           {/* Upload/Recording Section */}
           {!uploadedFile && (
             <Tabs defaultValue="upload" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="upload">Upload Video</TabsTrigger>
                 <TabsTrigger value="record" className="flex items-center gap-2">
                   <Monitor className="w-4 h-4" />
                   Desktop Recording
                 </TabsTrigger>
+                <TabsTrigger value="download">Download App</TabsTrigger>
               </TabsList>
               <TabsContent value="upload" className="mt-6">
                 <VideoUpload
@@ -142,6 +144,9 @@ const Index = () => {
               </TabsContent>
               <TabsContent value="record" className="mt-6">
                 <DesktopRecordingControls />
+              </TabsContent>
+              <TabsContent value="download" className="mt-6">
+                <DownloadDesktopApp />
               </TabsContent>
             </Tabs>
           )}
