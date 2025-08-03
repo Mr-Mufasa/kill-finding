@@ -100,6 +100,60 @@ export class VideoProcessor {
     }
   }
 
+  async extractVideoSegment(startTime: number, duration: number): Promise<Blob> {
+    if (!this.video) {
+      throw new Error('No video loaded');
+    }
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d')!;
+    
+    canvas.width = this.video.videoWidth;
+    canvas.height = this.video.videoHeight;
+
+    const stream = canvas.captureStream(30);
+    const mediaRecorder = new MediaRecorder(stream, {
+      mimeType: 'video/webm;codecs=vp9'
+    });
+
+    const chunks: Blob[] = [];
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        chunks.push(event.data);
+      }
+    };
+
+    return new Promise((resolve, reject) => {
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        resolve(blob);
+      };
+
+      mediaRecorder.onerror = (event) => {
+        reject(new Error('MediaRecorder error'));
+      };
+
+      this.video.currentTime = startTime;
+      this.video.onseeked = () => {
+        mediaRecorder.start();
+        this.video.play();
+
+        const recordFrame = () => {
+          if (this.video.currentTime >= startTime + duration) {
+            mediaRecorder.stop();
+            this.video.pause();
+            return;
+          }
+
+          ctx.drawImage(this.video, 0, 0, canvas.width, canvas.height);
+          requestAnimationFrame(recordFrame);
+        };
+
+        recordFrame();
+      };
+    });
+  }
+
   cleanup() {
     if (this.video.src) {
       URL.revokeObjectURL(this.video.src);

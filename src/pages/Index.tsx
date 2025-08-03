@@ -3,6 +3,7 @@ import { VideoUpload } from '@/components/VideoUpload';
 import { KillDetectionSettings } from '@/components/KillDetectionSettings';
 import { ProcessingPipeline } from '@/components/ProcessingPipeline';
 import { KillClipResults } from '@/components/KillClipResults';
+import { HighlightReelSettings } from '@/lib/ai/videoCompiler';
 import { DesktopRecordingControls } from '@/components/DesktopRecordingControls';
 import { DownloadDesktopApp } from '@/components/DownloadDesktopApp';
 import { useKillDetection, KillDetectionSettings as Settings } from '@/hooks/useKillDetection';
@@ -28,11 +29,14 @@ const Index = () => {
     progress,
     clips,
     estimatedTime,
+    isGeneratingReel,
+    highlightReelProgress,
     processVideo,
     downloadClip,
     downloadAllClips,
     deleteClip,
     previewClip,
+    generateHighlightReel,
     resetProcessing
   } = useKillDetection();
 
@@ -44,6 +48,16 @@ const Index = () => {
   const handleStartProcessing = async () => {
     if (!uploadedFile) return;
     await processVideo(uploadedFile, settings);
+  };
+
+  const handleGenerateHighlightReel = async (reelSettings: HighlightReelSettings) => {
+    if (!uploadedFile) return;
+    
+    try {
+      await generateHighlightReel(uploadedFile, reelSettings);
+    } catch (error) {
+      console.error('Error generating highlight reel:', error);
+    }
   };
 
   const handleNewUpload = () => {
@@ -184,10 +198,14 @@ const Index = () => {
           {clips.length > 0 && (
             <KillClipResults
               clips={clips}
+              isGenerating={isProcessing}
+              isGeneratingReel={isGeneratingReel}
+              highlightReelProgress={highlightReelProgress}
               onPreviewClip={previewClip}
               onDownloadClip={downloadClip}
               onDownloadAll={downloadAllClips}
               onDeleteClip={deleteClip}
+              onGenerateHighlightReel={handleGenerateHighlightReel}
             />
           )}
 

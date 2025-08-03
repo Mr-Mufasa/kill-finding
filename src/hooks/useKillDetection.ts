@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { VideoProcessor } from '@/lib/ai/videoProcessor';
 import { KillDetector } from '@/lib/ai/killDetector';
+import { VideoCompiler, HighlightReelSettings } from '@/lib/ai/videoCompiler';
 
 export interface KillDetectionSettings {
   audioDetection: boolean;
@@ -29,6 +30,8 @@ export const useKillDetection = () => {
   const [progress, setProgress] = useState(0);
   const [clips, setClips] = useState<KillClip[]>([]);
   const [estimatedTime, setEstimatedTime] = useState<number>(0);
+  const [isGeneratingReel, setIsGeneratingReel] = useState(false);
+  const [highlightReelProgress, setHighlightReelProgress] = useState(0);
 
   const processVideo = useCallback(async (
     videoFile: File,
@@ -152,12 +155,67 @@ export const useKillDetection = () => {
     alert(`Preview clip at ${Math.floor(clip.timestamp / 60)}:${(clip.timestamp % 60).toString().padStart(2, '0')}`);
   }, []);
 
+  const generateHighlightReel = useCallback(async (
+    videoFile: File,
+    settings: HighlightReelSettings
+  ): Promise<void> => {
+    if (clips.length === 0) {
+      throw new Error('No clips available for highlight reel');
+    }
+
+    setIsGeneratingReel(true);
+    setHighlightReelProgress(0);
+
+    try {
+      // Create video element for the source video
+      const videoElement = document.createElement('video');
+      videoElement.src = URL.createObjectURL(videoFile);
+      
+      await new Promise((resolve) => {
+        videoElement.onloadedmetadata = resolve;
+      });
+
+      setHighlightReelProgress(25);
+
+      // Initialize video compiler
+      const compiler = new VideoCompiler();
+      setHighlightReelProgress(50);
+
+      // Compile the highlight reel
+      const highlightBlob = await compiler.compileHighlightReel(videoElement, clips, settings);
+      setHighlightReelProgress(90);
+
+      // Download the highlight reel
+      const url = URL.createObjectURL(highlightBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `valorant-highlights-${Date.now()}.webm`;
+      link.click();
+
+      setHighlightReelProgress(100);
+      
+      // Cleanup
+      URL.revokeObjectURL(videoElement.src);
+      URL.revokeObjectURL(url);
+      compiler.cleanup();
+      
+    } catch (error) {
+      console.error('Error generating highlight reel:', error);
+      throw error;
+    } finally {
+      setIsGeneratingReel(false);
+      setHighlightReelProgress(0);
+    }
+  }, [clips]);
+
   const resetProcessing = useCallback(() => {
     setIsProcessing(false);
     setCurrentStep('');
     setProgress(0);
     setClips([]);
     setEstimatedTime(0);
+    setIsGeneratingReel(false);
+    setHighlightReelProgress(0);
   }, []);
 
   return {
@@ -166,11 +224,14 @@ export const useKillDetection = () => {
     progress,
     clips,
     estimatedTime,
+    isGeneratingReel,
+    highlightReelProgress,
     processVideo,
     downloadClip,
     downloadAllClips,
     deleteClip,
     previewClip,
+    generateHighlightReel,
     resetProcessing
   };
 };

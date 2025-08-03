@@ -3,8 +3,10 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Play, Download, Eye, Clock, Target, Trash2 } from 'lucide-react';
+import { Play, Download, Eye, Clock, Target, Trash2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { HighlightReelSettingsComponent } from '@/components/HighlightReelSettings';
+import { HighlightReelSettings } from '@/lib/ai/videoCompiler';
 
 interface KillClip {
   id: string;
@@ -21,19 +23,25 @@ interface KillClip {
 interface KillClipResultsProps {
   clips: KillClip[];
   isGenerating?: boolean;
+  isGeneratingReel?: boolean;
+  highlightReelProgress?: number;
   onPreviewClip: (clip: KillClip) => void;
   onDownloadClip: (clip: KillClip) => void;
   onDownloadAll: () => void;
   onDeleteClip: (clipId: string) => void;
+  onGenerateHighlightReel: (settings: HighlightReelSettings) => void;
 }
 
 export const KillClipResults: React.FC<KillClipResultsProps> = ({
   clips,
   isGenerating = false,
+  isGeneratingReel = false,
+  highlightReelProgress = 0,
   onPreviewClip,
   onDownloadClip,
   onDownloadAll,
-  onDeleteClip
+  onDeleteClip,
+  onGenerateHighlightReel
 }) => {
   const [selectedClips, setSelectedClips] = useState<Set<string>>(new Set());
 
@@ -69,13 +77,36 @@ export const KillClipResults: React.FC<KillClipResultsProps> = ({
       <Card className="p-6 bg-gradient-dark border-border shadow-card">
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center gap-3">
-            <Target className="w-6 h-6 text-accent animate-pulse" />
-            <h3 className="text-lg font-semibold text-foreground">Generating Kill Clips</h3>
+            <Loader2 className="w-6 h-6 text-accent animate-spin" />
+            <h3 className="text-lg font-semibold text-foreground">Analyzing Gameplay</h3>
           </div>
           <p className="text-muted-foreground">
-            AI is analyzing your gameplay and extracting highlight moments...
+            AI is detecting kills and creating clips...
           </p>
           <Progress value={65} className="w-full max-w-md mx-auto" />
+        </div>
+      </Card>
+    );
+  }
+
+  if (isGeneratingReel) {
+    return (
+      <Card className="p-6 bg-gradient-dark border-border shadow-card">
+        <div className="text-center space-y-4">
+          <div className="flex items-center justify-center gap-3">
+            <Loader2 className="w-6 h-6 text-accent animate-spin" />
+            <h3 className="text-lg font-semibold text-foreground">Generating Highlight Reel</h3>
+          </div>
+          <p className="text-muted-foreground">
+            Compiling all kills into one continuous video...
+          </p>
+          <Progress value={highlightReelProgress} className="w-full max-w-md mx-auto" />
+          <p className="text-sm text-muted-foreground">
+            {highlightReelProgress < 25 ? 'Loading video...' :
+             highlightReelProgress < 50 ? 'Initializing compiler...' :
+             highlightReelProgress < 90 ? 'Compiling video segments...' :
+             'Finalizing highlight reel...'}
+          </p>
         </div>
       </Card>
     );
@@ -98,16 +129,24 @@ export const KillClipResults: React.FC<KillClipResultsProps> = ({
   }
 
   return (
-    <Card className="p-6 bg-gradient-dark border-border shadow-card">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Target className="w-5 h-5 text-accent" />
-            <h3 className="text-lg font-semibold text-foreground">Kill Clips Detected</h3>
-            <Badge variant="secondary" className="bg-gradient-accent">
-              {clips.length} clips
-            </Badge>
-          </div>
+    <div className="space-y-6">
+      {/* Highlight Reel Settings */}
+      <HighlightReelSettingsComponent
+        onGenerateReel={onGenerateHighlightReel}
+        isGenerating={isGeneratingReel}
+        clipCount={clips.length}
+      />
+
+      <Card className="p-6 bg-gradient-dark border-border shadow-card">
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Target className="w-5 h-5 text-accent" />
+              <h3 className="text-lg font-semibold text-foreground">Individual Clips</h3>
+              <Badge variant="secondary" className="bg-gradient-accent">
+                {clips.length} clips
+              </Badge>
+            </div>
           
           <div className="flex gap-2">
             {selectedClips.size > 0 && (
@@ -239,7 +278,8 @@ export const KillClipResults: React.FC<KillClipResultsProps> = ({
             </p>
           </div>
         )}
-      </div>
-    </Card>
+        </div>
+      </Card>
+    </div>
   );
 };
