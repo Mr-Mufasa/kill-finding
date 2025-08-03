@@ -41,10 +41,23 @@ export const DownloadDesktopApp = () => {
 
   const fetchLatestRelease = async () => {
     try {
-      const response = await fetch('https://api.github.com/repos/Mr-Mufasa/kill-finding/releases/latest');
-      if (response.ok) {
-        const release = await response.json();
+      // Try to get the latest release first
+      const latestResponse = await fetch('https://api.github.com/repos/Mr-Mufasa/kill-finding/releases/latest');
+      if (latestResponse.ok) {
+        const release = await latestResponse.json();
         setLatestRelease(release);
+        return;
+      }
+      
+      // Fallback: get all releases and pick the most recent one
+      const allReleasesResponse = await fetch('https://api.github.com/repos/Mr-Mufasa/kill-finding/releases');
+      if (allReleasesResponse.ok) {
+        const releases = await allReleasesResponse.json();
+        if (releases.length > 0) {
+          // Get the most recent non-draft, non-prerelease
+          const latestRelease = releases.find((release: any) => !release.draft && !release.prerelease) || releases[0];
+          setLatestRelease(latestRelease);
+        }
       }
     } catch (error) {
       console.log('Could not fetch latest release');
